@@ -1,0 +1,356 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "3aba5982-77ee-445d-a33d-c6abefa437e8",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -384,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/10SMzvbUBuHeYOrA6Frep4H97qCe_XhAh8z8iXz8lCt4/edit?gid=2014303045#gid=2014303045",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2014303045,
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10SMzvbUBuHeYOrA6Frep4H97qCe_XhAh8z8iXz8lCt4/edit#gid=2014303045"
+        },
+        "options": {}
+      },
+      "id": "3dd3b54b-4378-4dc2-b1ad-7cc321ba58e1",
+      "name": "Get row(s) in sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -192,
+        16
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IKpTJgpTC9cvlsN0",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "a99c6757-118d-4b45-a903-055cc685aee8",
+      "name": "Normalize Company Row",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        16,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "company_name",
+        "options": {}
+      },
+      "id": "97cdf19e-bb55-4d2b-9d0a-a74b4eb8bd62",
+      "name": "Split Companies",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        224,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "domain": "={{ $json.company_name }}",
+        "limit": 2,
+        "filters": {
+          "department": [
+            "hr",
+            "it"
+          ]
+        }
+      },
+      "id": "bb169ab8-d253-45d3-b06f-22edb96634fe",
+      "name": "Hunter",
+      "type": "n8n-nodes-base.hunter",
+      "typeVersion": 1,
+      "position": [
+        416,
+        16
+      ],
+      "credentials": {
+        "hunterApi": {
+          "id": "npYqBrZNeXZQ3Cuh",
+          "name": "Hunter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "411162c8-2390-42a8-b1dd-a43acc0090a7",
+      "name": "Attach Job Context",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        624,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "bd920942-067d-48dd-86b0-44918e86416f",
+      "name": "Fetch Person Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        -384,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6eca1eb7-f123-4def-8c8c-75fde285eb53",
+      "name": "Loop Over Contacts",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -176,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "id": "dc16ca6c-899b-44da-9572-c2b4054a343e",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        64,
+        304
+      ],
+      "webhookId": "7ed1823c-73fb-4734-8046-8db2fa520745"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Person name: {{ $json.Name }}\nPerson position: {{ $json.Position }}\nCompany: {{ $json.company_name }}\nJob title: {{ $json.job_title }}\nJob link: {{ $json.job_link }}\n\nReturn JSON with keys subject and email_body.",
+        "options": {}
+      },
+      "id": "0c03dba2-3408-4624-b739-0f1eca209e7a",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        288,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "1956ac14-75a3-4336-9952-4d4140267f5d",
+      "name": "Parse AI Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [
+        608,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.email_body + '\\n\\nLinkedIn: https://www.linkedin.com/in/revanth-mudavath' }}",
+        "options": {}
+      },
+      "id": "5164b0f5-73ac-444c-8626-bb6192998f3b",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        816,
+        288
+      ],
+      "webhookId": "531d5c54-fd82-4fe4-8e74-82780cb078c8"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        304,
+        448
+      ],
+      "id": "a3ea6f19-966c-49cc-85b8-57de5973cec5",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "uOzyevvk7lnwonN9",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Normalize Company Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Company Row": {
+      "main": [
+        [
+          {
+            "node": "Split Companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Companies": {
+      "main": [
+        [
+          {
+            "node": "Hunter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hunter": {
+      "main": [
+        [
+          {
+            "node": "Attach Job Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach Job Context": {
+      "main": [
+        [
+          {
+            "node": "Fetch Person Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Person Data": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Contacts": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Output": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "72a93ba3b62408fa485440b80eabb00ca900ed7dba14541e196f8aa3e7737146"
+  }
+}
